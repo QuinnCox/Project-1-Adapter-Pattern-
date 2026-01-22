@@ -23,7 +23,7 @@ Separation of sensor drivers from application logic
 
 Demonstrates real-world use of the Adapter Pattern in embedded systems
 
-## Technologies Used
+## Technology Used:
 
 Python 3
 
