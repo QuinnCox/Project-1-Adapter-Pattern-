@@ -226,4 +226,5 @@ class DHT11:
         return the_bytes[0] + the_bytes[1] + the_bytes[2] + the_bytes[3] & 255
 
 
-main()
+if __name__ == "__main__":
+    main()
