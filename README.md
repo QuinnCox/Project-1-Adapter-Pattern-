@@ -45,7 +45,7 @@ This allows the rest of the system to work with temperature sensors generically,
 4. Class Diagram:
 
 
-   
+   ![Class Diagram](ClassDiagram.png)
 5. State Diagram: 
 
 
