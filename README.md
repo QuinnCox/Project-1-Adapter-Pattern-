@@ -40,7 +40,8 @@ This allows the rest of the system to work with temperature sensors generically,
 3. Sequence Diagram: 
 
 
-  
+  ![ADS1110 Sequence Diagram](ADS1110Sequence.png)
+  1[DHT11 Sequence Diagram](DHT11Sequence.png)
 4. Class Diagram:
 
 
