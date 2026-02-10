@@ -31,12 +31,21 @@ This allows the rest of the system to work with temperature sensors generically,
 ## Diagrams: 
 1. Use Case Diagram:
 
-   ![Use Case Diagram](UseCase.png)
-3. Activity Diagram:
 
-   ![Activity Diagram](ActivityDiagram.png)
-5. Sequence Diagram: 
-  
-6. Class Diagram:
+   ![Use Case Diagram](UseCase.png)
+2. Activity Diagram:
+
    
-7. State Diagram: 
+   ![Activity Diagram](ActivityDiagram.png)
+3. Sequence Diagram: 
+
+
+  
+4. Class Diagram:
+
+
+   
+5. State Diagram: 
+
+
+![State Diagram](StateDiagram.png)
