@@ -30,7 +30,7 @@ This allows the rest of the system to work with temperature sensors generically,
 
 ## Diagrams: 
 1. Class Diagram:
-   ![Use Case Diagram](useCase.png)
+   ![Use Case Diagram](UseCase.png)
 2. Sequence Diagram: 
   
 3. Component Diagram: 
