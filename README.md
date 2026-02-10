@@ -29,8 +29,12 @@ ADS1110Adapter adapts the ADS1110 + LM35 setup to the same interface
 This allows the rest of the system to work with temperature sensors generically, without hard-coding logic for specific hardware.
 
 ## Diagrams: 
-1. Class Diagram:
+1. Use Case Diagram:
    ![Use Case Diagram](UseCase.png)
-2. Sequence Diagram: 
+2. Activity Diagram:
+   ![Activity Diagram](ActivityDiagram.png)
+3. Sequence Diagram: 
   
-3. Component Diagram: 
+4. Class Diagram:
+   
+6. State Diagram: 
