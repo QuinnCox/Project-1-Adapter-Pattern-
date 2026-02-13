@@ -32,11 +32,11 @@ This allows the rest of the system to work with temperature sensors generically,
 1. Use Case Diagram:
 
 
-   ![Use Case Diagram](UseCase.png)
+   ![Use Case Diagram](UseCaseMermaid.png)
 2. Activity Diagram:
 
    
-   ![Activity Diagram](ActivityDiagram.png)
+   ![Activity Diagram](ActivityDiagramMermaid.png)
 3. Sequence Diagram: 
 
 
@@ -45,8 +45,8 @@ This allows the rest of the system to work with temperature sensors generically,
 4. Class Diagram:
 
 
-   ![Class Diagram](ClassDiagram.png)
+   ![Class Diagram](ClassDiagramMermaid.png)
 5. State Diagram: 
 
 
-![State Diagram](StateDiagram.png)
+![State Diagram](StateDiagramMermaid.png)
