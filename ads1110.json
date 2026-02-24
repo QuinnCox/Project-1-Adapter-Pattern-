@@ -1,0 +1,5 @@
+{
+  "mode": "ads",
+  "lm_type": "LM35",
+  "vref": 2.048
+}
