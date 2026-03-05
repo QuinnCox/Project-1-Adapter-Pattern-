@@ -27,26 +27,3 @@ TemperatureSensor defines a common interface (get_temperature)
 DHT11Adapter adapts the DHT11 sensor to this interface
 ADS1110Adapter adapts the ADS1110 + LM35 setup to the same interface
 This allows the rest of the system to work with temperature sensors generically, without hard-coding logic for specific hardware.
-
-## Diagrams: 
-1. Use Case Diagram:
-
-
-   ![Use Case Diagram](UseCaseMermaid.png)
-2. Activity Diagram:
-
-   
-   ![Activity Diagram](ActivityDiagramMermaid.png)
-3. Sequence Diagram: 
-
-
-  ![ADS1110 Sequence Diagram](ADS1110Sequence.png)
-  ![DHT11 Sequence Diagram](DHT11Sequence.png)
-4. Class Diagram:
-
-
-   ![Class Diagram](ClassDiagramMermaid.png)
-5. State Diagram: 
-
-
-![State Diagram](StateDiagramMermaid.png)
