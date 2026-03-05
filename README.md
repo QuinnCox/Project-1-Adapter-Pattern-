@@ -1,52 +1,98 @@
-# Project 1 Adapter Pattern
-## Overview
-This project demonstrates the Adapter Design Pattern by providing a unified interface for reading temperature data from two different hardware sensors on a Raspberry Pi.
-The system abstracts sensor-specific details behind a common TemperatureSensor interface, allowing client code to retrieve temperature readings without needing to know which sensor is being used or how it communicates with the hardware.
+---
+marp: true
+theme: default
+paginate: true
+---
 
-## The project supports:
-A DHT11 digital temperature and humidity sensor
-An ADS1110 analog-to-digital converter paired with an LM35 temperature sensor
+# Temperature Monitoring System
+## Decorator Pattern Architecture
+Presented by: [Your Name]
 
-## Features:
-Common TemperatureSensor abstract base class
-Adapter implementations for two different sensor types
-Hardware access via the lgpio library
-Separation of sensor drivers from application logic
-Demonstrates real-world use of the Adapter Pattern in embedded systems
+---
 
-## Technology Used:
-Python 3
-Raspberry Pi GPIO and I2C
-lgpio library
-DHT11 temperature sensor
-ADS1110 ADC with LM35 temperature sensor
+# General Description & Usage:
 
-## Adapter Pattern Usage: 
-This project uses the Adapter Pattern to allow incompatible sensor interfaces to work together.
-TemperatureSensor defines a common interface (get_temperature)
-DHT11Adapter adapts the DHT11 sensor to this interface
-ADS1110Adapter adapts the ADS1110 + LM35 setup to the same interface
-This allows the rest of the system to work with temperature sensors generically, without hard-coding logic for specific hardware.
-
-## Diagrams: 
-1. Use Case Diagram:
+* The goal of this task is to extend the existing temperature monitoring system by introducing the Decorator pattern to improve reliability and separation of concerns.
+* We are introducing two decorators to handle errors.
+* The RetryDecorator manages retry logic if a sensor fails to return data. 
+* The FallbackDecorator provides a backup sensor mechanism.
 
 
-   ![Use Case Diagram](UseCaseMermaid.png)
-2. Activity Diagram:
+---
 
-   
-   ![Activity Diagram](ActivityDiagramMermaid.png)
-3. Sequence Diagram: 
+# Why Separate Decorators?:
 
+* We built Retry and Fallback as separate decorators so each decorator has one responsibility.
+* The RetryDecorator only handles retry logic and must not know anything about fallback processes or other sensors.
+* The FallbackDecorator only handles fallback logic and must not perform retries. It also must not contain hardware logic or modify the underlying adapters.
+* Keeping these decorators distinct prevents complex, fragile code.
 
-  ![ADS1110 Sequence Diagram](ADS1110Sequence.png)
-  ![DHT11 Sequence Diagram](DHT11Sequence.png)
-4. Class Diagram:
+---
 
+# Architectural Changes:
 
-   ![Class Diagram](ClassDiagramMermaid.png)
-5. State Diagram: 
+* The factory used to simply selecte and returne a single raw adapter.
+* The factory builds a list containing multiple base sensors then wraps these base sensors with the RetryDecorator if required. 
+* Finally, it wraps the entire collection with the FallbackDecorator. As a result of this restructuring, no reliability logic may remain in the main application.
+* The main function must only call the basic temperature retrieval method.
 
+---
 
-![State Diagram](StateDiagramMermaid.png)
+# Single Responsibility Principle:
+
+* This architecture strongly satisfies the Single Responsibility Principle by isolating reliability logic inside the decorators, so the main application no longer needs to perform retries or check which sensor failed.
+* Each decorator limits itself to one specific job.
+* The system is easy to extend without having to modify the existing classes.
+* We can add unlimited fallback layers simply by updating the list in the factory.
+
+---
+
+# Use Case Diagram
+
+<style>
+  img {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
+
+![center width:5000px](useCaseDiagram.png)
+
+---
+
+# Activity Diagram
+
+<style>
+  img {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
+
+![width:425px](activityDiagram.png)
+
+---
+
+# Class Diagram
+
+<style>
+  img {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
+
+![center width:750px](classDiagram.png)
+
+---
+
+#  Diagram
+
+<style>
+  img {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
+
+![center width:375px](stateDiagram.png)
