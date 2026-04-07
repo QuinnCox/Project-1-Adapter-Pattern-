@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app
+# Copy the brain script into the container
+COPY brain.py . 
+# Expose the port the Brain listens on
+EXPOSE 8888
+CMD ["python", "brain.py"]

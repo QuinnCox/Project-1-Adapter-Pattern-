@@ -1,0 +1,5 @@
+FROM python:3.11-slim
+WORKDIR /app
+# Copy the web observer script into the container
+COPY web_client.py .
+CMD ["python", "web_client.py"]
