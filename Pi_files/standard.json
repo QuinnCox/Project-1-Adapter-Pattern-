@@ -1,0 +1,10 @@
+{
+  "mode": "ads",
+  "lm_type": "LM35",
+  "vref": 2.048,
+  "fallback": {
+    "mode": "dht11",
+    "pin": 21,
+    "chip": 0
+  }
+}
