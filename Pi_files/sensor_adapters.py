@@ -30,7 +30,7 @@ class DHT11Adapter(TemperatureSensor):
             self.gpio = None
 
 
-class ADS1110Adapter(TemperatureSensor):  
+class ADS1110Adapter(TemperatureSensor):
     def __init__(self, lm_type="LM35", vref=2.048, full_scale_counts=32768):
         self.lm_type = lm_type.upper()
         self.vref = float(vref)
