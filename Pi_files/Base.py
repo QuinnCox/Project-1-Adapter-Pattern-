@@ -1,16 +1,13 @@
+# -*- coding: utf-8 -*-
 import time
 import sys
 
 from sensor_adapters import DHT11Adapter, ADS1110Adapter
-# Choose sensor from command line:
-#   python3 Base.py dht
-#   python3 Base.py ads
-# Defaults to dht
+
+# python3 Base.py dht  or  python3 Base.py ads
 
 def main():
-    mode = "dht"
-    if len(sys.argv) >= 2:
-        mode = sys.argv[1].strip().lower()
+    mode = sys.argv[1].strip().lower() if len(sys.argv) >= 2 else "dht"
 
     sensor = None
 
@@ -29,8 +26,7 @@ def main():
                 print(f"{label}: read failed")
             else:
                 temp_f = temp_c * 9.0 / 5.0 + 32.0
-                print(f"{label}: {temp_c:.1f} Â°C / {temp_f:.1f} Â°F")
-
+                print(f"{label}: {temp_c:.1f} °C / {temp_f:.1f} °F")
             time.sleep(1)
 
     except KeyboardInterrupt:
@@ -42,7 +38,6 @@ def main():
                 sensor.close()
             except Exception:
                 pass
-
 
 if __name__ == "__main__":
     main()
