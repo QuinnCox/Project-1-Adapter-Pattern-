@@ -1,356 +1,220 @@
-#!/usr/bin/env python3
-"""
-Complete Raspberry Pi Client for Distributed Observer Pattern Assignment
-Integrates Simple Factory, Decorator, Strategy, and Observer patterns
-"""
-
+# -*- coding: utf-8 -*-
 import socket
 import json
 import time
 import argparse
-import threading
 from datetime import datetime
-from typing import Optional, Dict, Any
-from abc import ABC, abstractmethod
 
-# Import your existing sensor system
-from Sensor_factory import SensorFactory 
-from decorators import RetryDecorator, FallbackDecorator
+from Sensor_factory import SensorFactory
+from Decorator import RetryDecorator, FallbackDecorator
 
 
 class SensorDataDTO:
-    """Data Transfer Object for sensor readings"""
-    
-    def __init__(self, origin: str, temperature: float, unit: str = "C", timestamp: str = None):
+    def __init__(self, origin, temperature, unit="C", timestamp=None):
         self.origin = origin
         self.temperature = temperature
         self.unit = unit
         self.timestamp = timestamp or datetime.now().isoformat()
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self):
         return {
             "origin": self.origin,
             "payload": {"temp": self.temperature, "unit": self.unit},
             "timestamp": self.timestamp
         }
-    
-    def to_json(self) -> str:
+
+    def to_json(self):
         return json.dumps(self.to_dict())
 
 
 class TemperatureFilter:
-    """Strategy pattern for data filtering"""
-    
-    def __init__(self, threshold: float = 0.5):
+    def __init__(self, threshold=0.5):
         self.threshold = threshold
-        self.last_sent_temp: Optional[float] = None
-    
-    def should_send(self, current_temp: float) -> bool:
-        """Determine if temperature reading should be sent"""
+        self.last_sent_temp = None
+
+    def should_send(self, current_temp):
         if self.last_sent_temp is None:
             self.last_sent_temp = current_temp
             return True
-        
         if abs(current_temp - self.last_sent_temp) >= self.threshold:
             self.last_sent_temp = current_temp
             return True
-        
         return False
 
 
 class WebServerObserver:
-    """Observer that sends data to web server via socket"""
-    
-    def __init__(self, web_host: str = "localhost", web_port: int = 8888):
+    def __init__(self, web_host="localhost", web_port=8888):
         self.web_host = web_host
         self.web_port = web_port
         self.socket = None
         self.connected = False
-        self.connection_attempts = 0
-        
-    def connect(self) -> bool:
-        """Connect to web server"""
+
+    def connect(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(10)
             self.socket.connect((self.web_host, self.web_port))
             self.connected = True
-            self.connection_attempts = 0
-            print(f"Connected to web server at {self.web_host}:{self.web_port}")
+            print(f"Connected to {self.web_host}:{self.web_port}")
             return True
         except Exception as e:
-            self.connection_attempts += 1
-            print(f"Failed to connect to web server: {e}")
+            print(f"Failed to connect: {e}")
             return False
-    
-    def send_data(self, sensor_data: SensorDataDTO) -> bool:
-        """Send sensor data to web server"""
+
+    def send_data(self, sensor_data):
         if not self.connected:
             if not self.connect():
                 return False
-        
         try:
-            json_data = sensor_data.to_json()
-            self.socket.send(json_data.encode('utf-8'))
-            
-            # Wait for acknowledgment
+            self.socket.send((sensor_data.to_json() + "\n").encode("utf-8"))
             response = self.socket.recv(1024)
-            ack = json.loads(response.decode('utf-8'))
-            
+            ack = json.loads(response.decode("utf-8"))
             if ack.get("status") == "received":
-                print(f"Sent: {sensor_data.temperature:.1f}C -> Web Server [OK]")
+                print(f"Sent: {sensor_data.temperature:.1f}C [OK]")
                 return True
-            else:
-                print(f"Unexpected response: {ack}")
-                return False
-                
+            return False
         except Exception as e:
-            print(f"Failed to send data: {e}")
+            print(f"Send failed: {e}")
             self.connected = False
             if self.socket:
                 self.socket.close()
                 self.socket = None
             return False
-    
+
     def disconnect(self):
-        """Disconnect from web server"""
         if self.socket:
             try:
                 self.socket.close()
-            except:
+            except Exception:
                 pass
         self.connected = False
         print("Disconnected from web server")
 
 
 class SensorSubject:
-    """Subject in Observer pattern - manages sensor readings and notifications"""
-    
-    def __init__(self, pi_id: str, sensor_config: Dict[str, Any]):
+    def __init__(self, pi_id, sensor_config):
         self.pi_id = pi_id
-        self.sensor_config = sensor_config
-        
-        # Create sensor using Simple Factory pattern
         self.sensor = SensorFactory.create_sensor(sensor_config)
-        
-        # Apply Decorator patterns for reliability
-        if sensor_config.get('retries', 0) > 0:
-            self.sensor = RetryDecorator(self.sensor, retries=sensor_config['retries'])
-        
-        if 'fallback' in sensor_config:
-            fallback_sensor = SensorFactory.create_sensor(sensor_config['fallback'])
-            # FallbackDecorator expects a list of sensors
-            self.sensor = FallbackDecorator([self.sensor, fallback_sensor])
-        
-        # Strategy pattern for filtering
         self.filter_strategy = TemperatureFilter(threshold=0.5)
-        
         self.observers = []
-        
-        # Statistics
         self.readings_taken = 0
         self.readings_sent = 0
         self.readings_filtered = 0
-        
-        print(f"Sensor Subject initialized for {pi_id}")
-        print(f"   Sensor Config: {sensor_config}")
-    
+        print(f"Initialized sensor subject for {pi_id}")
+
     def attach_observer(self, observer):
-        """Attach an observer"""
         if observer not in self.observers:
             self.observers.append(observer)
-            print(f"Observer attached: {type(observer).__name__}")
-    
+
     def detach_observer(self, observer):
-        """Detach an observer"""
         if observer in self.observers:
             self.observers.remove(observer)
-            print(f"Observer detached: {type(observer).__name__}")
-    
-    def notify_observers(self, sensor_data: SensorDataDTO):
-        """Notify all observers with new sensor data"""
-        print(f"Notifying {len(self.observers)} observers...")
+
+    def notify_observers(self, sensor_data):
         for observer in self.observers:
             try:
                 observer.send_data(sensor_data)
             except Exception as e:
                 print(f"Error notifying observer: {e}")
-    
-    def take_reading(self) -> Optional[float]:
-        """Take a sensor reading using the configured sensor"""
+
+    def take_reading(self):
+        self.readings_taken += 1
         try:
-            self.readings_taken += 1
-            temperature = self.sensor.get_temperature()
-            
-            if temperature is not None:
-                print(f"Reading: {temperature:.1f}C")
-                return temperature
+            temp = self.sensor.get_temperature()
+            if temp is not None:
+                print(f"Reading: {temp:.1f}C")
             else:
-                print("Sensor reading failed")
-                return None
-                
+                print("Sensor read failed")
+            return temp
         except Exception as e:
             print(f"Sensor error: {e}")
             return None
-    
-    def process_reading(self, temperature: float) -> bool:
-        """Process a temperature reading using strategy pattern"""
+
+    def process_reading(self, temperature):
         if self.filter_strategy.should_send(temperature):
-            # Create DTO
-            sensor_data = SensorDataDTO(
-                origin=self.pi_id,
-                temperature=temperature,
-                unit="C"
-            )
-            
+            sensor_data = SensorDataDTO(origin=self.pi_id, temperature=temperature, unit="C")
             self.notify_observers(sensor_data)
             self.readings_sent += 1
             return True
-        else:
-            print(f"Filtered: {temperature:.1f}C (not significant change)")
-            self.readings_filtered += 1
-            return False
-    
-    def start_monitoring(self, interval: float = 2.0):
-        """Start continuous sensor monitoring"""
-        print(f"Starting monitoring (interval: {interval}s)")
-        print("   Press Ctrl+C to stop")
-        
+        print(f"Filtered: {temperature:.1f}C")
+        self.readings_filtered += 1
+        return False
+
+    def start_monitoring(self, interval=2.0):
+        print(f"Monitoring started (interval: {interval}s), press Ctrl+C to stop")
         try:
             while True:
-                # Take reading
-                temperature = self.take_reading()
-                
-                if temperature is not None:
-                    self.process_reading(temperature)
-                
-                # Wait for next reading
+                temp = self.take_reading()
+                if temp is not None:
+                    self.process_reading(temp)
                 time.sleep(interval)
-                
         except KeyboardInterrupt:
-            print(f"\nMonitoring stopped by user")
-        except Exception as e:
-            print(f"Monitoring error: {e}")
-    
-    def get_statistics(self) -> Dict[str, Any]:
-        """Get monitoring statistics"""
-        filter_rate = (self.readings_filtered / self.readings_taken * 100) if self.readings_taken > 0 else 0
-        
+            print("\nMonitoring stopped.")
+
+    def get_statistics(self):
+        rate = (self.readings_filtered / self.readings_taken * 100) if self.readings_taken > 0 else 0
         return {
             "pi_id": self.pi_id,
             "readings_taken": self.readings_taken,
             "readings_sent": self.readings_sent,
             "readings_filtered": self.readings_filtered,
-            "filter_rate": f"{filter_rate:.1f}%",
-            "observers": len(self.observers)
+            "filter_rate": f"{rate:.1f}%"
         }
 
 
-def get_sensor_config(pi_id: str) -> Dict[str, Any]:
-    """Get sensor configuration based on Pi ID"""
+def get_sensor_config(pi_id):
     if "TeamA" in pi_id:
-        return {
-            "mode": "dht11",
-            "pin": 21,
-            "chip": 0,
-            "retries": 3
-        }
+        return {"mode": "dht11", "pin": 21, "chip": 0, "retries": 3}
     elif "TeamB" in pi_id:
-        return {
-            "mode": "ads",
-            "lm_type": "LM35",
-            "retries": 2,
-            "fallback": {
-                "mode": "dht11",
-                "pin": 22,
-                "retries": 1
-            }
-        }
-    else:
-        # Default configuration
-        return {
-            "mode": "dht11",
-            "pin": 21,
-            "chip": 0,
-            "retries": 3
-        }
+        return {"mode": "ads", "lm_type": "LM35", "retries": 2,
+                "fallback": {"mode": "dht11", "pin": 22, "retries": 1}}
+    return {"mode": "dht11", "pin": 21, "chip": 0, "retries": 3}
 
 
 def main():
-    """Main function"""
-    parser = argparse.ArgumentParser(description='Raspberry Pi Sensor Client with Design Patterns')
-    parser.add_argument('pi_id', nargs='?', default='Pi_TeamA',
-                       help='Pi identifier (e.g., Pi_TeamA, Pi_TeamB)')
-    parser.add_argument('--web-host', default='192.168.1.100',
-                       help='Web server hostname or IP address')
-    parser.add_argument('--web-port', type=int, default=8888,
-                       help='Web server port')
-    parser.add_argument('--interval', type=float, default=2.0,
-                       help='Sensor reading interval in seconds')
-    parser.add_argument('--config', type=str,
-                       help='Custom sensor configuration JSON')
-    
+    parser = argparse.ArgumentParser(description="Pi Sensor Client")
+    parser.add_argument("pi_id", nargs="?", default="Pi_TeamA")
+    parser.add_argument("--web-host", default="192.168.1.100")
+    parser.add_argument("--web-port", type=int, default=8888)
+    parser.add_argument("--interval", type=float, default=2.0)
+    parser.add_argument("--config", type=str)
     args = parser.parse_args()
-    
-    print("Starting Raspberry Pi Sensor Client")
-    print("=" * 50)
-    print(f"Pi ID: {args.pi_id}")
-    print(f"Web Server: {args.web_host}:{args.web_port}")
-    print(f"Interval: {args.interval}s")
-    print("=" * 50)
-    
-    # Get sensor configuration
+
     if args.config:
         try:
             sensor_config = json.loads(args.config)
         except json.JSONDecodeError:
-            print("Invalid JSON configuration")
+            print("Invalid JSON config")
             return
     else:
         sensor_config = get_sensor_config(args.pi_id)
-    
+
     try:
-        # Create sensor subject with Observer pattern
-        sensor_subject = SensorSubject(args.pi_id, sensor_config)
-        
-        web_observer = WebServerObserver(args.web_host, args.web_port)
-        
-        # Attach observer to subject (Observer pattern)
-        sensor_subject.attach_observer(web_observer)
-        
-        # Test connection to web server
-        print("Testing connection to web server...")
-        max_retries = 5
-        for attempt in range(max_retries):
-            if web_observer.connect():
+        subject = SensorSubject(args.pi_id, sensor_config)
+        observer = WebServerObserver(args.web_host, args.web_port)
+        subject.attach_observer(observer)
+
+        for attempt in range(5):
+            if observer.connect():
                 break
-            print(f"Connection attempt {attempt + 1}/{max_retries} failed, retrying in 3 seconds...")
+            print(f"Connection attempt {attempt + 1}/5 failed, retrying...")
             time.sleep(3)
         else:
-            print("Failed to connect to web server after all retries")
-            print("   Please check:")
-            print("   1. Web server is running")
-            print("   2. IP address is correct")
-            print("   3. Port is not blocked by firewall")
+            print("Could not connect to web server")
             return
-        
-        # Start monitoring
-        sensor_subject.start_monitoring(args.interval)
-        
+
+        subject.start_monitoring(args.interval)
+
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Cleanup and show statistics
         try:
-            if 'web_observer' in locals():
-                web_observer.disconnect()
-            
-            if 'sensor_subject' in locals():
-                stats = sensor_subject.get_statistics()
-                print("\nFinal Statistics:")
-                for key, value in stats.items():
-                    print(f"   {key}: {value}")
-        except:
+            observer.disconnect()
+            stats = subject.get_statistics()
+            print("\nFinal stats:")
+            for k, v in stats.items():
+                print(f"  {k}: {v}")
+        except Exception:
             pass
 
 
