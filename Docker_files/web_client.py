@@ -1,27 +1,30 @@
 import socket
 import json
 
+
 def start_web_observer():
-    # Connect to the 'brain' service name defined in docker-compose 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('brain', 8888))
+    client.connect(("brain", 8888))
 
-    # Register as an observer 
-    registration = json.dumps({"type": "observer"})
-    client.sendall(registration.encode('utf-8'))
-    print("[Web] Registered as Observer. Waiting for data...")
+    client.sendall(json.dumps({"type": "observer"}).encode("utf-8"))
+    print("Registered as observer, waiting for data...")
 
+    buffer = ""
     while True:
         try:
             data = client.recv(1024)
-            if data:
-                message = json.loads(data.decode('utf-8'))
-                # In a real scenario, this would update your dashboard [cite: 5]
+            if not data:
+                break
+            buffer += data.decode("utf-8")
+            while "\n" in buffer:
+                line, buffer = buffer.split("\n", 1)
+                message = json.loads(line)
                 print(f"\n[Web Display] {message['timestamp']}")
                 print(f"Source: {message['origin']} | Temp: {message['payload']['temp']}C")
         except Exception as e:
-            print(f"[Web] Lost connection: {e}")
+            print(f"Lost connection: {e}")
             break
+
 
 if __name__ == "__main__":
     start_web_observer()
